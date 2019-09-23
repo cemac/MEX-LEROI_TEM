@@ -10211,8 +10211,6 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   REAL(KIND = 8)                                :: TDFD, DO3D, ISYS, PRFL, ISTOP
   ! * STEP, NSX, NCHNL, KRXW
   REAL(KIND = 8)                                :: STEP, NSX, NCHNL, KRXW
-  ! * TOPN, TCLS
-  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: TOPN, TCLS
   ! * SURVEY_TYPE
   REAL(KIND = 8)                                :: SURVEY_TYPE
   ! * NLINES, MRXL, NTX, SOURCE_TYPE, MVRTX, NTRN
@@ -10241,6 +10239,8 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   REAL(KIND = 8)                                :: REFTYM, OFFTYM
   ! * TXON, TXAMP
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: TXON, WAVEFORM
+  ! * TOPN, TCLS
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: TOPN, TCLS
   ! * NLYR, NPLT, NLITH
   REAL(KIND = 8)                                :: NLYR, NPLT, NLITH
   ! * LYTH
@@ -10258,7 +10258,7 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   !******************************************************************************************
   ! Check number of input and output arguments.
   ! Ten input arguments required:
-  IF(NRHS .NE. 10) THEN
+  IF(NRHS .NE. 12) THEN
     CALL ERRORMESSAGE('nargin', &
                       'Ten input arguments expected')
   ! Only one output value will be provided:
@@ -10282,36 +10282,6 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   NSX    =    4
   NCHNL  =   20
   KRXW   =    1
-  ! 0.006000  0.007625
-  ! 0.007625  0.009750
-  ! 0.009750  0.012500
-  ! 0.012500  0.015880
-  ! 0.015880  0.020250
-  ! 0.020250  0.025880
-  ! 0.025880  0.033000
-  ! 0.033000  0.042130
-  ! 0.042130  0.053750
-  ! 0.053750  0.068500
-  ! 0.068500  0.087380
-  ! 0.087380  0.111400
-  ! 0.111400  0.151700
-  ! 0.151700  0.181100
-  ! 0.181100  0.231000
-  ! 0.231000  0.294600
-  ! 0.294600  0.375900
-  ! 0.375900  0.479500
-  ! 0.479500  0.611600
-  ! 0.611600  0.780100 ! TOPN, TCLS (in ms)
-  ALLOCATE(TOPN(INT(NCHNL)))
-  TOPN = (/0.006000, 0.007625, 0.009750, 0.012500, 0.015880, &
-           0.020250, 0.025880, 0.033000, 0.042130, 0.053750, &
-           0.068500, 0.087380, 0.111400, 0.151700, 0.181100, &
-           0.231000, 0.294600, 0.375900, 0.479500, 0.611600/)
-  ALLOCATE(TCLS(INT(NCHNL)))
-  TCLS = (/0.007625, 0.009750, 0.012500, 0.015880, 0.020250, &
-           0.025880, 0.033000, 0.042130, 0.053750, 0.068500, &
-           0.087380, 0.111400, 0.151700, 0.181100, 0.231000, &
-           0.294600, 0.375900, 0.479500, 0.611600, 0.780100/)
   ! 1 ! SURVEY_TYPE
   SURVEY_TYPE = 1
   ! 1 1 1 1 4 1 ! NLINES, MRXL, NTX, SOURCE_TYPE, MVRTX, NTRN
@@ -10389,31 +10359,41 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   CALL CHECK1DARRAY(PRHS(4), INT(NSX), 'typeargin',                  &
                     'Argument 4 (TXAMP) Should be a double vector.', &
                     WAVEFORM)
+  ! Fifth argument is TOPN:
+  ! Check is array of correct size:
+  CALL CHECK1DARRAY(PRHS(5), INT(NCHNL), 'typeargin',               &
+                    'Argument 5 (TOPN) Should be a double vector.', &
+                    TOPN)
+  ! Sixth argument is TCLS:
+  ! Check is array of correct size:
+  CALL CHECK1DARRAY(PRHS(6), INT(NCHNL), 'typeargin',               &
+                    'Argument 6 (TCLS) Should be a double vector.', &
+                    TCLS)
 
 
   ! Third argument is NLYR.
   ! Check is integer. If successful, returns NLYR:
-  CALL CHECKINTEGER(PRHS(5), 'typeargin',                      &
+  CALL CHECKINTEGER(PRHS(7), 'typeargin',                      &
                     'Argument 3 (NLYR) should be an integer.', &
                     NLYR)
   ! Fourth argument is NPLT.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(6), 'typeargin',                      &
+  CALL CHECKINTEGER(PRHS(8), 'typeargin',                      &
                     'Argument 4 (NPLT) should be an integer.', &
                     NPLT)
   ! Fifth argument is NLITH.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(7), 'typeargin',                       &
+  CALL CHECKINTEGER(PRHS(9), 'typeargin',                       &
                     'Argument 5 (NLITH) should be an integer.', &
                     NLITH)
   ! Sixth argument is LYTH.
   ! Check is array of correct size. If succesful, returns LYTH. 7 = NPROP:
-  CALL CHECK2DARRAY(PRHS(8), INT(NLITH), 7, 'typeargin',        &
+  CALL CHECK2DARRAY(PRHS(10), INT(NLITH), 7, 'typeargin',        &
                     'Argument 6 (LYTH) Should be a 2D vector.', &
                     LYTH)
   ! Seventh argument is LITHL:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(9), INT(NLYR), 'typeargin',                      &
+  CALL CHECK1DARRAY(PRHS(11), INT(NLYR), 'typeargin',                      &
                     'Argument 7 (LITHL) Should be a vector of integers.', &
                     LITHL)
   ! Check for integers:
@@ -10427,7 +10407,7 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
     END IF
   END DO
   ! Eigth argument is THK:
-  CALL CHECK1DARRAY(PRHS(10), INT(NLYR - 1), 'typeargin',           &
+  CALL CHECK1DARRAY(PRHS(12), INT(NLYR - 1), 'typeargin',           &
                     'Argument 8 (THK) Should be a double vector.', &
                     THK)
 

@@ -24,7 +24,7 @@ Offset Loop with 1 receiver - Model: 2 layers over basement, 2 plates
 0.294600  0.375900
 0.375900  0.479500
 0.479500  0.611600
-0.611600  0.780100    ! TOPN, TCLS (in ms)
+0.611600  0.780100    ! TOPN, TCLS(NCHNL) (in ms)
 1                     ! SURVEY_TYPE
 1 1 1 1 4 1           ! NLINES, MRXL, NTX, SOURCE_TYPE, MVRTX, NTRN
 4 0                   ! NVRTX TxZ
