@@ -30,7 +30,8 @@
 % 5 5
 % -5 5
 % -5 -5
-% 5 -5                  ! SXE, SXN(NTX)
+% 5 -5                  ! SXE, SXN(MVRTX)
+% 15 0 0                ! RXE, RXN, RXZ    
 %
 % 3 0 3                 !! NLYR, NPLT, NLITH
 % 9.9773 -1 1 1 0 0 1
@@ -54,6 +55,10 @@ TCLS   = [0.007625, 0.009750, 0.012500, 0.015880, 0.020250, ...
           0.294600, 0.375900, 0.479500, 0.611600, 0.780100];
 SXE    = [5, -5, -5, 5];
 SXN    = [5, 5, -5, -5];
+RXE    = 15;
+RXN    = 0;
+RXZ    = 0;
+
 NLYR   = 3;
 NPLT   = 0;
 NLITH  = 3;
@@ -63,4 +68,5 @@ LYTH   = [9.9773, -1, 1, 1, 0, 0, 1; ...
 LITHL  = [1, 2, 3];
 THK    = [94.2462, 34.1019];
 
-LEROI_TEM(REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+LEROI_TEM(REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, RXE, RXN, RXZ, ...
+          NLYR, NPLT, NLITH, LYTH, LITHL, THK)

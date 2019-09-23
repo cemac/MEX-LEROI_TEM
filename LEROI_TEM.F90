@@ -10225,10 +10225,6 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ! * SV_AZM
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: CMP, KNORM, IPLT, IDH, RXMNT
   REAL(KIND = 8)                                :: SV_AZM
-  ! * RXE, RXN
-  ! * RXZ
-  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:,:) :: QD1, QD2
-  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:)   :: RXZ
 
   ! These inputs really do come from Matlab, and are used in the
   ! READ_MODEL_DATA subroutine:
@@ -10242,6 +10238,11 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ! * SXE, SXN
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: SXE, SXN
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:)   :: SXED, SXND
+  ! * RXE, RXN
+  ! * RXZ
+  REAL(KIND = 8)                                :: QD1IN, QD2IN, RXZIN
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:,:) :: QD1, QD2
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:)   :: RXZ
   ! * NLYR, NPLT, NLITH
   REAL(KIND = 8)                                :: NLYR, NPLT, NLITH
   ! * LYTH
@@ -10258,10 +10259,10 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
 
   !******************************************************************************************
   ! Check number of input and output arguments.
-  ! Ten input arguments required:
-  IF(NRHS .NE. 14) THEN
+  ! Seventeen input arguments required:
+  IF(NRHS .NE. 17) THEN
     CALL ERRORMESSAGE('nargin', &
-                      'Ten input arguments expected')
+                      'Seventeen input arguments expected')
   ! Only one output value will be provided:
   ELSE IF(NLHS .GT. 1) THEN
     CALL ERRORMESSAGE('nargout', &
@@ -10320,13 +10321,6 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   IDH     = (/0/)
   ALLOCATE(RXMNT(INT(NLINES)))
   RXMNT   = (/1/)
-  ! 15 0 0 ! RXE, RXN, RXZ
-  ALLOCATE(QD1(INT(MRXL), INT(NLINES), 2))
-  QD1     = 15
-  ALLOCATE(QD2(INT(MRXL), INT(NLINES), 2))
-  QD2     = 0
-  ALLOCATE(RXZ(INT(MRXL), INT(NLINES)))
-  RXZ     = 0
 
   !******************************************************************************************
   ! Get Matlab provided input
@@ -10377,45 +10371,68 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ! SXND is reshaped SXN:
   ALLOCATE(SXND(INT(MXVRTX), INT(NTX)))
   SXND = RESHAPE(SXN, SHAPE(SXND))
-
-  ! Third argument is NLYR.
+  ! Ninth argument is RXE.
+  ! Check is double. If successful, returns QD1IN:
+  CALL CHECKDOUBLE(PRHS(9), 'typeargin',                   &
+                   'Argument 9 (RXE) should be a double.', &
+                   QD1IN)
+  ! QD1 is actually a 3D array ... :
+  ALLOCATE(QD1(INT(MRXL), INT(NLINES), 2))
+  QD1 = QD1IN
+  ! Tenth argument is RXN.
+  ! Check is double. If successful, returns QD2IN:
+  CALL CHECKDOUBLE(PRHS(10), 'typeargin',                   &
+                   'Argument 10 (RXN) should be a double.', &
+                   QD2IN)
+  ! QD2 is actually a 3D array ... :
+  ALLOCATE(QD2(INT(MRXL), INT(NLINES), 2))
+  QD2 = QD2IN
+  ! Eleventh argument is RXZ.
+  ! Check is double. If successful, returns RXZIN:
+  CALL CHECKDOUBLE(PRHS(11), 'typeargin',                   &
+                   'Argument 11 (RXN) should be a double.', &
+                   QD2IN)
+  ! RXZ is actually a 2D array ... :
+  ALLOCATE(RXZ(INT(MRXL), INT(NLINES)))
+  RXZ = RXZIN
+  ! Twelfth argument is NLYR.
   ! Check is integer. If successful, returns NLYR:
-  CALL CHECKINTEGER(PRHS(9), 'typeargin',                      &
-                    'Argument 3 (NLYR) should be an integer.', &
+  CALL CHECKINTEGER(PRHS(12), 'typeargin',                      &
+                    'Argument 12 (NLYR) should be an integer.', &
                     NLYR)
-  ! Fourth argument is NPLT.
+  ! Thirteenth argument is NPLT.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(10), 'typeargin',                      &
-                    'Argument 4 (NPLT) should be an integer.', &
+  CALL CHECKINTEGER(PRHS(13), 'typeargin',                      &
+                    'Argument 13 (NPLT) should be an integer.', &
                     NPLT)
-  ! Fifth argument is NLITH.
+  ! Fourteenth argument is NLITH.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(11), 'typeargin',                       &
-                    'Argument 5 (NLITH) should be an integer.', &
+  CALL CHECKINTEGER(PRHS(14), 'typeargin',                       &
+                    'Argument 14 (NLITH) should be an integer.', &
                     NLITH)
-  ! Sixth argument is LYTH.
+  ! Fifteenth argument is LYTH.
   ! Check is array of correct size. If succesful, returns LYTH. 7 = NPROP:
-  CALL CHECK2DARRAY(PRHS(12), INT(NLITH), 7, 'typeargin',        &
-                    'Argument 6 (LYTH) Should be a 2D vector.', &
+  CALL CHECK2DARRAY(PRHS(15), INT(NLITH), 7, 'typeargin',        &
+                    'Argument 15 (LYTH) Should be a 2D vector.', &
                     LYTH)
-  ! Seventh argument is LITHL:
+  ! Sixteenth argument is LITHL:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(13), INT(NLYR), 'typeargin',                      &
-                    'Argument 7 (LITHL) Should be a vector of integers.', &
+  CALL CHECK1DARRAY(PRHS(16), INT(NLYR), 'typeargin',                      &
+                    'Argument 16 (LITHL) Should be a vector of integers.', &
                     LITHL)
   ! Check for integers:
   DO I = 1, INT(NLYR)
     IF (LITHL(I) .NE. FLOOR(LITHL(I))) THEN
       ! Get number of expected values:
       WRITE(NCHAR, '(I0)'), INT(NLYR)
-      CALL ERRORMESSAGE('typeargin',                                         &
-                        'Argument 7 (LITHL) Should be a vector of integers.' &
+      CALL ERRORMESSAGE('typeargin',                                          &
+                        'Argument 16 (LITHL) Should be a vector of integers.' &
                         // ' Expected size: 1x' // TRIM(NCHAR))
     END IF
   END DO
-  ! Eigth argument is THK:
-  CALL CHECK1DARRAY(PRHS(14), INT(NLYR - 1), 'typeargin',           &
-                    'Argument 8 (THK) Should be a double vector.', &
+  ! Seventeenth argument is THK:
+  CALL CHECK1DARRAY(PRHS(17), INT(NLYR - 1), 'typeargin',           &
+                    'Argument 17 (THK) Should be a double vector.', &
                     THK)
 
   !******************************************************************************************
