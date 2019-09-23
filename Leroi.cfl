@@ -32,8 +32,8 @@ Offset Loop with 1 receiver - Model: 2 layers over basement, 2 plates
 -5 5 0
 -5 -5 0
 5 -5 0                ! SXE, SXN, SXZ(MVRTX)
-1 1 1 1 4             ! LINE IDTX, RX_TYPE, NRX, UNITS
-3 0 0 1 0 1           ! CMP SV_AZM, KNORM, IPLT, IDH, RXMNT
+1 1 1 1 4             ! LINE, IDTX, RX_TYPE, NRX, UNITS
+3 0 0 1 0 1           ! CMP, SV_AZM, KNORM, IPLT, IDH, RXMNT
 15 0 0                ! RXE, RXN, RXZ    
 3 0 3                 !! NLYR, NPLT, NLITH
 9.9773 -1 1 1 0 0 1
