@@ -1,10 +1,10 @@
 Offset Loop with 1 receiver - Model: 2 layers over basement, 2 plates
 1 0 0 1 0             ! TDFD, DO3D, ISYS, PRFL, ISTOP
-0 4 20 1 1.05 1.05    ! STEP, NSX, NCHNL, KRXW, REFTYM, OFFTIME
+0 4 20 1 1.05 1.05    ! STEP, NSX, NCHNL, KRXW, REFTYM, OFFTYM
 0.0     0.0
 0.001   1.0
 1.0492  1.0
-1.05    0.0           ! TXON, TXAMP(4)
+1.05    0.0           ! TXON, TXAMP(NSX)
 0.006000  0.007625
 0.007625  0.009750
 0.009750  0.012500
