@@ -10023,6 +10023,36 @@ MODULE MEX_LEROI
   END SUBROUTINE ERRORMESSAGE
 
   !******************************************************************************************
+  ! Double checking:
+  SUBROUTINE CHECKDOUBLE(MP, MSGTYPE, MSG, D)
+    ! No implicits:
+    IMPLICIT NONE
+    ! Inputs:
+    MWPOINTER                      :: MP
+    CHARACTER(LEN = *), INTENT(IN) :: MSGTYPE, MSG
+    ! Double output:
+    MWPOINTER                      :: MPD
+    REAL(KIND = 8), INTENT(OUT)    :: D
+    ! Matlab functions:
+    MWPOINTER                      :: MXISDOUBLE, MXISCOMPLEX
+    MWPOINTER                      :: MXGETM, MXGETN
+    MWPOINTER                      :: MXGETPR
+    ! Check is scalar double:
+    IF ((MXISDOUBLE(MP) .NE. 1) .OR.  &
+        (MXISCOMPLEX(MP) .EQ. 1) .OR. &
+        (MXGETM(MP) .NE. 1) .OR.      &
+        (MXGETN(MP) .NE. 1)) THEN
+      ! Send error message to Matlab:
+      CALL ERRORMESSAGE(MSGTYPE, MSG)
+    ELSE
+      ! Get pointer:
+      MPD = MXGETPR(MP)
+      ! Copy value to D:
+      call MXCOPYPTRTOREAL8(MPD, D, 1)
+    END IF
+  END SUBROUTINE CHECKDOUBLE
+
+  !******************************************************************************************
   ! Integer checking:
   SUBROUTINE CHECKINTEGER(MP, MSGTYPE, MSG, I)
     ! No implicits:
@@ -10179,8 +10209,8 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ! Names in provided Leroi.cfl
   ! * TDFD, DO3D, ISYS, PRFL, ISTOP
   REAL(KIND = 8)                                :: TDFD, DO3D, ISYS, PRFL, ISTOP
-  ! * STEP, NSX, NCHNL, KRXW, REFTYM, OFFTIME
-  REAL(KIND = 8)                                :: STEP, NSX, NCHNL, KRXW, REFTYM, OFFTYM
+  ! * STEP, NSX, NCHNL, KRXW
+  REAL(KIND = 8)                                :: STEP, NSX, NCHNL, KRXW
   ! * TXON, TXAMP
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: TXON, WAVEFORM
   ! * TOPN, TCLS
@@ -10209,6 +10239,8 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ! These inputs really do come from Matlab, and are used in the
   ! READ_MODEL_DATA subroutine:
   !
+  ! * REFTYM, OFFTIME
+  REAL(KIND = 8)                                :: REFTYM, OFFTYM
   ! * NLYR, NPLT, NLITH
   REAL(KIND = 8)                                :: NLYR, NPLT, NLITH
   ! * LYTH
@@ -10226,9 +10258,9 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   !******************************************************************************************
   ! Check number of input and output arguments.
   ! Six input arguments required:
-  IF(NRHS .NE. 6) THEN
+  IF(NRHS .NE. 8) THEN
     CALL ERRORMESSAGE('nargin', &
-                      'Six input arguments expected')
+                      'Eight input arguments expected')
   ! Only one output value will be provided:
   ELSE IF(NLHS .GT. 1) THEN
     CALL ERRORMESSAGE('nargout', &
@@ -10245,13 +10277,11 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ISYS  = 0
   PRFL  = 1
   ISTOP = 0
-  ! 0 4 20 1 1.05 1.05 ! STEP, NSX, NCHNL, KRXW, REFTYM, OFFTIME
+  ! 0 4 20 1 1.05 1.05 ! STEP, NSX, NCHNL, KRXW
   STEP   =    0
   NSX    =    4
   NCHNL  =   20
   KRXW   =    1
-  REFTYM = 1.05
-  OFFTYM = 1.05
   ! 0.0     0.0
   ! 0.001   1.0
   ! 1.0492  1.0
@@ -10347,30 +10377,40 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   !******************************************************************************************
   ! Get Matlab provided input
   !
-  ! First argument is NLYR.
+  ! First argument is REFTYM.
+  ! Check is double. If successful, returns REFTYM:
+  CALL CHECKDOUBLE(PRHS(1), 'typeargin',                      &
+                   'Argument 1 (REFTYM) should be a double.', &
+                   REFTYM)
+  ! Second argument is OFFTIME.
+  ! Check is double. If successful, returns OFFTYM:
+  CALL CHECKDOUBLE(PRHS(2), 'typeargin',                       &
+                   'Argument 2 (OFFTYM) should be a double.', &
+                   OFFTYM)
+  ! Third argument is NLYR.
   ! Check is integer. If successful, returns NLYR:
-  CALL CHECKINTEGER(PRHS(1), 'typeargin',                      &
-                    'Argument 1 (NLYR) should be an integer.', &
+  CALL CHECKINTEGER(PRHS(3), 'typeargin',                      &
+                    'Argument 3 (NLYR) should be an integer.', &
                     NLYR)
-  ! Second argument is NPLT.
+  ! Fourth argument is NPLT.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(2), 'typeargin',                      &
-                    'Argument 2 (NPLT) should be an integer.', &
+  CALL CHECKINTEGER(PRHS(4), 'typeargin',                      &
+                    'Argument 4 (NPLT) should be an integer.', &
                     NPLT)
-  ! Third argument is NLITH.
+  ! Fifth argument is NLITH.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(3), 'typeargin',                       &
-                    'Argument 3 (NLITH) should be an integer.', &
+  CALL CHECKINTEGER(PRHS(5), 'typeargin',                       &
+                    'Argument 5 (NLITH) should be an integer.', &
                     NLITH)
-  ! Fourth argument is LYTH.
+  ! Sixth argument is LYTH.
   ! Check is array of correct size. If succesful, returns LYTH. 7 = NPROP:
-  CALL CHECK2DARRAY(PRHS(4), INT(NLITH), 7, 'typeargin',        &
-                    'Argument 4 (LYTH) Should be a 2D vector.', &
+  CALL CHECK2DARRAY(PRHS(6), INT(NLITH), 7, 'typeargin',        &
+                    'Argument 6 (LYTH) Should be a 2D vector.', &
                     LYTH)
-  ! Fifth argument is LITHL:
+  ! Seventh argument is LITHL:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(5), INT(NLYR), 'typeargin',                      &
-                    'Argument 5 (LITHL) Should be a vector of integers.', &
+  CALL CHECK1DARRAY(PRHS(7), INT(NLYR), 'typeargin',                      &
+                    'Argument 7 (LITHL) Should be a vector of integers.', &
                     LITHL)
   ! Check for integers:
   DO I = 1, INT(NLYR)
@@ -10378,13 +10418,13 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
       ! Get number of expected values:
       WRITE(NCHAR, '(I0)'), INT(NLYR)
       CALL ERRORMESSAGE('typeargin',                                         &
-                        'Argument 5 (LITHL) Should be a vector of integers.' &
+                        'Argument 7 (LITHL) Should be a vector of integers.' &
                         // ' Expected size: 1x' // TRIM(NCHAR))
     END IF
   END DO
-  ! Sixth argument is THK:
-  CALL CHECK1DARRAY(PRHS(6), INT(NLYR - 1), 'typeargin',           &
-                    'Argument 6 (THK) Should be a double vector.', &
+  ! Eigth argument is THK:
+  CALL CHECK1DARRAY(PRHS(8), INT(NLYR - 1), 'typeargin',           &
+                    'Argument 8 (THK) Should be a double vector.', &
                     THK)
 
   !******************************************************************************************
