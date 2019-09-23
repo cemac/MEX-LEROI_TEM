@@ -10217,8 +10217,6 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   REAL(KIND = 8)                                :: NLINES, MRXL, NTX, SOURCE_TYPE, MXVRTX, A1
   ! * NVRTX TxZ
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: NVRTX, TXZ
-  ! * SXE, SXN
-  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:)   :: SXED, SXND
   ! * LINE, RX_TYPE, NRX, UNITS
   ! * IDTX
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: LINE, RX_TYPE, NRX, UNITS
@@ -10241,6 +10239,9 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: TXON, WAVEFORM
   ! * TOPN, TCLS
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: TOPN, TCLS
+  ! * SXE, SXN
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: SXE, SXN
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:)   :: SXED, SXND
   ! * NLYR, NPLT, NLITH
   REAL(KIND = 8)                                :: NLYR, NPLT, NLITH
   ! * LYTH
@@ -10258,7 +10259,7 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   !******************************************************************************************
   ! Check number of input and output arguments.
   ! Ten input arguments required:
-  IF(NRHS .NE. 12) THEN
+  IF(NRHS .NE. 14) THEN
     CALL ERRORMESSAGE('nargin', &
                       'Ten input arguments expected')
   ! Only one output value will be provided:
@@ -10296,15 +10297,6 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   NVRTX = (/4/)
   ALLOCATE(TXZ(INT(NTX)))
   TXZ   = (/0/)
-  !  5  5 0
-  ! -5  5 0
-  ! -5 -5 0
-  !  5 -5 0 ! SXE, SXN, SXZ(1,4)
-  ! SXZ values do not seem to be read from Leroi.cfl file.
-  ALLOCATE(SXED(INT(MXVRTX), INT(NTX)))
-  SXED = RESHAPE((/5, -5, -5, 5/), SHAPE(SXED))
-  ALLOCATE(SXND(INT(MXVRTX), INT(NTX)))
-  SXND = RESHAPE((/5, 5, -5, -5/), SHAPE(SXND))
   ! 1 1 1 1 4 ! LINE IDTX, RX_TYPE, NRX, UNITS
   ALLOCATE(LINE(INT(NLINES)))
   LINE    = (/1/)
@@ -10369,31 +10361,46 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   CALL CHECK1DARRAY(PRHS(6), INT(NCHNL), 'typeargin',               &
                     'Argument 6 (TCLS) Should be a double vector.', &
                     TCLS)
-
+  ! Seventh argument is SXE:
+  ! Check is array of correct size:
+  CALL CHECK1DARRAY(PRHS(7), INT(MXVRTX), 'typeargin',             &
+                    'Argument 7 (SXE) Should be a double vector.', &
+                    SXE)
+  ! SXED is reshaped SXE:
+  ALLOCATE(SXED(INT(MXVRTX), INT(NTX)))
+  SXED = RESHAPE(SXE, SHAPE(SXED))
+  ! Eighth argument is SXN:
+  ! Check is array of correct size:
+  CALL CHECK1DARRAY(PRHS(8), INT(MXVRTX), 'typeargin',             &
+                    'Argument 8 (SXN) Should be a double vector.', &
+                    SXN)
+  ! SXND is reshaped SXN:
+  ALLOCATE(SXND(INT(MXVRTX), INT(NTX)))
+  SXND = RESHAPE(SXN, SHAPE(SXND))
 
   ! Third argument is NLYR.
   ! Check is integer. If successful, returns NLYR:
-  CALL CHECKINTEGER(PRHS(7), 'typeargin',                      &
+  CALL CHECKINTEGER(PRHS(9), 'typeargin',                      &
                     'Argument 3 (NLYR) should be an integer.', &
                     NLYR)
   ! Fourth argument is NPLT.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(8), 'typeargin',                      &
+  CALL CHECKINTEGER(PRHS(10), 'typeargin',                      &
                     'Argument 4 (NPLT) should be an integer.', &
                     NPLT)
   ! Fifth argument is NLITH.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(9), 'typeargin',                       &
+  CALL CHECKINTEGER(PRHS(11), 'typeargin',                       &
                     'Argument 5 (NLITH) should be an integer.', &
                     NLITH)
   ! Sixth argument is LYTH.
   ! Check is array of correct size. If succesful, returns LYTH. 7 = NPROP:
-  CALL CHECK2DARRAY(PRHS(10), INT(NLITH), 7, 'typeargin',        &
+  CALL CHECK2DARRAY(PRHS(12), INT(NLITH), 7, 'typeargin',        &
                     'Argument 6 (LYTH) Should be a 2D vector.', &
                     LYTH)
   ! Seventh argument is LITHL:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(11), INT(NLYR), 'typeargin',                      &
+  CALL CHECK1DARRAY(PRHS(13), INT(NLYR), 'typeargin',                      &
                     'Argument 7 (LITHL) Should be a vector of integers.', &
                     LITHL)
   ! Check for integers:
@@ -10407,7 +10414,7 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
     END IF
   END DO
   ! Eigth argument is THK:
-  CALL CHECK1DARRAY(PRHS(12), INT(NLYR - 1), 'typeargin',           &
+  CALL CHECK1DARRAY(PRHS(14), INT(NLYR - 1), 'typeargin',           &
                     'Argument 8 (THK) Should be a double vector.', &
                     THK)
 
