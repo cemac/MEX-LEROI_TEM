@@ -2,7 +2,7 @@
 
 % The input below is equivalent to the Leroi.cfl content:
 %
-% 1.05 1.05             ! REFTYM, OFFTYM
+% 20 1.05 1.05          ! NCHNL, REFTYM, OFFTYM
 % 0.0     0.0
 % 0.001   1.0
 % 1.0492  1.0
@@ -41,6 +41,7 @@
 % 2 34.1019             !! LITHL(NLYR - 1), THK(NLYR - 1)
 % 3                     !! LITH(NLYR) 
 
+NCHNL = 20;
 REFTYM = 1.05;
 OFFTYM = 1.05;
 TXON   = [0.0, 0.001, 1.0492, 1.05];
@@ -68,5 +69,5 @@ LYTH   = [9.9773, -1, 1, 1, 0, 0, 1; ...
 LITHL  = [1, 2, 3];
 THK    = [94.2462, 34.1019];
 
-LEROI_TEM(REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, RXE, RXN, RXZ, ...
-          NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+          RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)

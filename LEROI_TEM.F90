@@ -10209,8 +10209,8 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ! Names in provided Leroi.cfl
   ! * TDFD, DO3D, ISYS, PRFL, ISTOP
   REAL(KIND = 8)                                :: TDFD, DO3D, ISYS, PRFL, ISTOP
-  ! * STEP, NSX, NCHNL, KRXW
-  REAL(KIND = 8)                                :: STEP, NSX, NCHNL, KRXW
+  ! * STEP, NSX, KRXW
+  REAL(KIND = 8)                                :: STEP, NSX, KRXW
   ! * SURVEY_TYPE
   REAL(KIND = 8)                                :: SURVEY_TYPE
   ! * NLINES, MRXL, NTX, SOURCE_TYPE, MVRTX, NTRN
@@ -10229,6 +10229,8 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ! These inputs really do come from Matlab, and are used in the
   ! READ_MODEL_DATA subroutine:
   !
+  ! * NCHNL
+  REAL(KIND = 8)                                :: NCHNL
   ! * REFTYM, OFFTYM
   REAL(KIND = 8)                                :: REFTYM, OFFTYM
   ! * TXON, TXAMP
@@ -10260,9 +10262,9 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   !******************************************************************************************
   ! Check number of input and output arguments.
   ! Seventeen input arguments required:
-  IF(NRHS .NE. 17) THEN
+  IF(NRHS .NE. 18) THEN
     CALL ERRORMESSAGE('nargin', &
-                      'Seventeen input arguments expected')
+                      'Eighteen input arguments expected')
   ! Only one output value will be provided:
   ELSE IF(NLHS .GT. 1) THEN
     CALL ERRORMESSAGE('nargout', &
@@ -10279,10 +10281,9 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   ISYS  = 0
   PRFL  = 1
   ISTOP = 0
-  ! 0 4 20 1 1.05 1.05 ! STEP, NSX, NCHNL, KRXW
+  ! 0 4 1 ! STEP, NSX, KRXW
   STEP   =    0
   NSX    =    4
-  NCHNL  =   20
   KRXW   =    1
   ! 1 ! SURVEY_TYPE
   SURVEY_TYPE = 1
@@ -10325,100 +10326,105 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   !******************************************************************************************
   ! Get Matlab provided input
   !
-  ! First argument is REFTYM.
+  ! First argument is NCHNL.
+  ! Check is integer. If successful, returns NCHNL:
+  CALL CHECKINTEGER(PRHS(1), 'typeargin',                       &
+                    'Argument 1 (NCHNL) should be an integer.', &
+                    NCHNL)
+  ! Second argument is REFTYM.
   ! Check is double. If successful, returns REFTYM:
-  CALL CHECKDOUBLE(PRHS(1), 'typeargin',                      &
-                   'Argument 1 (REFTYM) should be a double.', &
-                   REFTYM)
-  ! Second argument is OFFTYM.
-  ! Check is double. If successful, returns OFFTYM:
   CALL CHECKDOUBLE(PRHS(2), 'typeargin',                      &
-                   'Argument 2 (OFFTYM) should be a double.', &
+                   'Argument 2 (REFTYM) should be a double.', &
+                   REFTYM)
+  ! Third argument is OFFTYM.
+  ! Check is double. If successful, returns OFFTYM:
+  CALL CHECKDOUBLE(PRHS(3), 'typeargin',                      &
+                   'Argument 3 (OFFTYM) should be a double.', &
                    OFFTYM)
-  ! Third argument is TXON:
+  ! Fourth argument is TXON:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(3), INT(NSX), 'typeargin',                 &
-                    'Argument 3 (TXON) Should be a double vector.', &
+  CALL CHECK1DARRAY(PRHS(4), INT(NSX), 'typeargin',                 &
+                    'Argument 4 (TXON) Should be a double vector.', &
                     TXON)
-  ! Fourth argument is TXAMP:
+  ! Fifth argument is TXAMP:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(4), INT(NSX), 'typeargin',                  &
-                    'Argument 4 (TXAMP) Should be a double vector.', &
+  CALL CHECK1DARRAY(PRHS(5), INT(NSX), 'typeargin',                  &
+                    'Argument 5 (TXAMP) Should be a double vector.', &
                     WAVEFORM)
-  ! Fifth argument is TOPN:
-  ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(5), INT(NCHNL), 'typeargin',               &
-                    'Argument 5 (TOPN) Should be a double vector.', &
-                    TOPN)
-  ! Sixth argument is TCLS:
+  ! Sixth argument is TOPN:
   ! Check is array of correct size:
   CALL CHECK1DARRAY(PRHS(6), INT(NCHNL), 'typeargin',               &
-                    'Argument 6 (TCLS) Should be a double vector.', &
-                    TCLS)
-  ! Seventh argument is SXE:
+                    'Argument 6 (TOPN) Should be a double vector.', &
+                    TOPN)
+  ! Seventh argument is TCLS:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(7), INT(MXVRTX), 'typeargin',             &
-                    'Argument 7 (SXE) Should be a double vector.', &
+  CALL CHECK1DARRAY(PRHS(7), INT(NCHNL), 'typeargin',               &
+                    'Argument 7 (TCLS) Should be a double vector.', &
+                    TCLS)
+  ! Eigth argument is SXE:
+  ! Check is array of correct size:
+  CALL CHECK1DARRAY(PRHS(8), INT(MXVRTX), 'typeargin',             &
+                    'Argument 8 (SXE) Should be a double vector.', &
                     SXE)
   ! SXED is reshaped SXE:
   ALLOCATE(SXED(INT(MXVRTX), INT(NTX)))
   SXED = RESHAPE(SXE, SHAPE(SXED))
-  ! Eighth argument is SXN:
+  ! Ninth argument is SXN:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(8), INT(MXVRTX), 'typeargin',             &
-                    'Argument 8 (SXN) Should be a double vector.', &
+  CALL CHECK1DARRAY(PRHS(9), INT(MXVRTX), 'typeargin',             &
+                    'Argument 9 (SXN) Should be a double vector.', &
                     SXN)
   ! SXND is reshaped SXN:
   ALLOCATE(SXND(INT(MXVRTX), INT(NTX)))
   SXND = RESHAPE(SXN, SHAPE(SXND))
-  ! Ninth argument is RXE.
+  ! Tennth argument is RXE.
   ! Check is double. If successful, returns QD1IN:
-  CALL CHECKDOUBLE(PRHS(9), 'typeargin',                   &
-                   'Argument 9 (RXE) should be a double.', &
+  CALL CHECKDOUBLE(PRHS(10), 'typeargin',                   &
+                   'Argument 10 (RXE) should be a double.', &
                    QD1IN)
   ! QD1 is actually a 3D array ... :
   ALLOCATE(QD1(INT(MRXL), INT(NLINES), 2))
   QD1 = QD1IN
-  ! Tenth argument is RXN.
+  ! Eeleventh argument is RXN.
   ! Check is double. If successful, returns QD2IN:
-  CALL CHECKDOUBLE(PRHS(10), 'typeargin',                   &
-                   'Argument 10 (RXN) should be a double.', &
+  CALL CHECKDOUBLE(PRHS(11), 'typeargin',                   &
+                   'Argument 11 (RXN) should be a double.', &
                    QD2IN)
   ! QD2 is actually a 3D array ... :
   ALLOCATE(QD2(INT(MRXL), INT(NLINES), 2))
   QD2 = QD2IN
-  ! Eleventh argument is RXZ.
+  ! Twelfth argument is RXZ.
   ! Check is double. If successful, returns RXZIN:
-  CALL CHECKDOUBLE(PRHS(11), 'typeargin',                   &
-                   'Argument 11 (RXN) should be a double.', &
+  CALL CHECKDOUBLE(PRHS(12), 'typeargin',                   &
+                   'Argument 12 (RXN) should be a double.', &
                    QD2IN)
   ! RXZ is actually a 2D array ... :
   ALLOCATE(RXZ(INT(MRXL), INT(NLINES)))
   RXZ = RXZIN
-  ! Twelfth argument is NLYR.
+  ! Thirteenth argument is NLYR.
   ! Check is integer. If successful, returns NLYR:
-  CALL CHECKINTEGER(PRHS(12), 'typeargin',                      &
-                    'Argument 12 (NLYR) should be an integer.', &
-                    NLYR)
-  ! Thirteenth argument is NPLT.
-  ! Check is integer:
   CALL CHECKINTEGER(PRHS(13), 'typeargin',                      &
-                    'Argument 13 (NPLT) should be an integer.', &
-                    NPLT)
-  ! Fourteenth argument is NLITH.
+                    'Argument 13 (NLYR) should be an integer.', &
+                    NLYR)
+  ! Fourteenth argument is NPLT.
   ! Check is integer:
-  CALL CHECKINTEGER(PRHS(14), 'typeargin',                       &
-                    'Argument 14 (NLITH) should be an integer.', &
+  CALL CHECKINTEGER(PRHS(14), 'typeargin',                      &
+                    'Argument 14 (NPLT) should be an integer.', &
+                    NPLT)
+  ! Fifteenth argument is NLITH.
+  ! Check is integer:
+  CALL CHECKINTEGER(PRHS(15), 'typeargin',                       &
+                    'Argument 15 (NLITH) should be an integer.', &
                     NLITH)
-  ! Fifteenth argument is LYTH.
+  ! Sixteenth argument is LYTH.
   ! Check is array of correct size. If succesful, returns LYTH. 7 = NPROP:
-  CALL CHECK2DARRAY(PRHS(15), INT(NLITH), 7, 'typeargin',        &
-                    'Argument 15 (LYTH) Should be a 2D vector.', &
+  CALL CHECK2DARRAY(PRHS(16), INT(NLITH), 7, 'typeargin',        &
+                    'Argument 16 (LYTH) Should be a 2D vector.', &
                     LYTH)
-  ! Sixteenth argument is LITHL:
+  ! Seventeenth argument is LITHL:
   ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(16), INT(NLYR), 'typeargin',                      &
-                    'Argument 16 (LITHL) Should be a vector of integers.', &
+  CALL CHECK1DARRAY(PRHS(17), INT(NLYR), 'typeargin',                      &
+                    'Argument 17 (LITHL) Should be a vector of integers.', &
                     LITHL)
   ! Check for integers:
   DO I = 1, INT(NLYR)
@@ -10426,13 +10432,13 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
       ! Get number of expected values:
       WRITE(NCHAR, '(I0)'), INT(NLYR)
       CALL ERRORMESSAGE('typeargin',                                          &
-                        'Argument 16 (LITHL) Should be a vector of integers.' &
+                        'Argument 17 (LITHL) Should be a vector of integers.' &
                         // ' Expected size: 1x' // TRIM(NCHAR))
     END IF
   END DO
-  ! Seventeenth argument is THK:
-  CALL CHECK1DARRAY(PRHS(17), INT(NLYR - 1), 'typeargin',           &
-                    'Argument 17 (THK) Should be a double vector.', &
+  ! Eighteenth argument is THK:
+  CALL CHECK1DARRAY(PRHS(18), INT(NLYR - 1), 'typeargin',           &
+                    'Argument 18 (THK) Should be a double vector.', &
                     THK)
 
   !******************************************************************************************

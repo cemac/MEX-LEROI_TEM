@@ -25,7 +25,7 @@ Various input values are hard coded in the Fortran source, and are equivalent to
 ```
 Offset Loop with 1 receiver - Model: 2 layers over basement, 2 plates
 1 0 0 1 0             ! TDFD, DO3D, ISYS, PRFL, ISTOP
-0 4 20 1              ! STEP, NSX, NCHNL, KRXW
+0 4 1                 ! STEP, NSX, KRXW
 1                     ! SURVEY_TYPE
 1 1 1 1 4 1           ! NLINES, MRXL, NTX, SOURCE_TYPE, MVRTX, NTRN
 4 0                   ! NVRTX TxZ
@@ -35,12 +35,12 @@ Offset Loop with 1 receiver - Model: 2 layers over basement, 2 plates
 
 These values are used by the Leroi subroutine `READ_SYSTEM_AND_SURVEY_DATA`.
 
-Seventeen additional input values are required from Matlab for the variables `REFTYM`, `OFFTYM`, `TXON`, `TXAMP`, `TOPN`, `TCLS`, `SXE`, `SXN`, `RXE`, `RXN`, `RXZ`, `NLYR`, `NPLT`, `NLITH`, `LYTH`, `LITHL` and `THK`.
+Eighteen additional input values are required from Matlab for the variables `NCHNL`, `REFTYM`, `OFFTYM`, `TXON`, `TXAMP`, `TOPN`, `TCLS`, `SXE`, `SXN`, `RXE`, `RXN`, `RXZ`, `NLYR`, `NPLT`, `NLITH`, `LYTH`, `LITHL` and `THK`.
 
 In the `Leroi.cfl` these would be specified as:
 
 ```
-1.05 1.05             ! REFTYM, OFFTYM
+20 1.05 1.05          ! NCHNL, REFTYM, OFFTYM
 0.0     0.0
 0.001   1.0
 1.0492  1.0
@@ -83,6 +83,7 @@ In the `Leroi.cfl` these would be specified as:
 In Matlab, these would be specified as:
 
 ```
+NCHNL  = 20;
 REFTYM = 1.05;
 OFFTYM = 1.05;
 TXON   = [0.0, 0.001, 1.0492, 1.05];
@@ -114,15 +115,15 @@ THK    = [94.2462, 34.1019];
 Then, to run the model in Matlab:
 
 ```
-LEROI_TEM(REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, RXE, RXN, RXZ, ...
-          NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+          RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
 ```
 
 This will return a single output double vector, e.g.:
 
 ```
-OUT = LEROI_TEM(REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, RXE, RXN, RXZ, ...
-                NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+OUT = LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+                RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
 ```
 
 The Fortran code will validate input values before running, e.g.:
@@ -136,10 +137,10 @@ The Fortran code will validate input values before running, e.g.:
 >> LITHL = [1, 2, 3];
 >> THK   = [94.2462, 34.1019];
 >> 
->> LEROI_TEM(REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, RXE, RXN, RXZ, ...
-             NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+>> LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+             RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
 Error using LEROI_TEM
-Argument 12 (NLYR) should be an integer.
+Argument 13 (NLYR) should be an integer.
 ```
 
 ### Limitations
