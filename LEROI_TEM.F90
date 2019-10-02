@@ -10255,7 +10255,7 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: THK
 
   ! Matlab output:
-  REAL(KIND = 8), DIMENSION(20)                 :: FORWARD_MODEL
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: FORWARD_MODEL
   MWSIZE                                        :: MSFORWARD_MODEL
   MWPOINTER                                     :: MPFORWARD_MODEL
 
@@ -10440,6 +10440,9 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   CALL CHECK1DARRAY(PRHS(18), INT(NLYR - 1), 'typeargin',           &
                     'Argument 18 (THK) Should be a double vector.', &
                     THK)
+
+  ! Allocate FORWARD_MODEL output to required size:
+  ALLOCATE(FORWARD_MODEL(INT(NCHNL)))
 
   !******************************************************************************************
   ! Call LEROI_TEM with inputs from Matlab and static values.
