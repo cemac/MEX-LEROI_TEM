@@ -1,4 +1,4 @@
-# Windows compuilation notes
+# Windows compilation notes
 
 The MEX file included here was Compiled with Intel Fortran 2015 and Matlab 2016a.
 
