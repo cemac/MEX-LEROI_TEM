@@ -31,6 +31,7 @@
 % -5 5
 % -5 -5
 % 5 -5                  ! SXE, SXN(MVRTX)
+% 4                     ! UNITS
 % 15 0 0                ! RXE, RXN, RXZ    
 %
 % 3 0 3                 !! NLYR, NPLT, NLITH
@@ -68,6 +69,7 @@ LYTH   = [9.9773, -1, 1, 1, 0, 0, 1; ...
           887.959, -1, 1, 1, 0, 0, 1];
 LITHL  = [1, 2, 3];
 THK    = [94.2462, 34.1019];
+UNITS  = [4];
 
-LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
-          RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+[X, Y, Z] = LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+                      RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK, UNITS)
