@@ -3180,7 +3180,7 @@ SUBROUTINE LEROI_TEM(MXTDFD, MXDO3D, MXISYS, MXPRFL, MXISTOP,                &
                      MXLYTH,                                                 &
                      MXLITHL,                                                &
                      MXTHK,                                                  &
-                     FORWARD_MODEL)
+                     MODEL_X, MODEL_Y, MODEL_Z)
 !------------
 
 !*** Calls FDREAD, HSBOSS, HSBOSS_FRQ, LEROI_3D, SET_SWYTD, TDEM_3D
@@ -3199,7 +3199,7 @@ SUBROUTINE LEROI_TEM(MXTDFD, MXDO3D, MXISYS, MXPRFL, MXISTOP,                &
  REAL, ALLOCATABLE, DIMENSION(:,:,:,:) :: BTD,BTD_SCAT
  COMPLEX, ALLOCATABLE, DIMENSION(:,:,:,:) :: BFD_SCAT,BFD
  REAL CMP_START, CMP_END, ELAPSED
- REAL (KIND = 8) :: FORWARD_MODEL(:)
+ REAL (KIND = 8) :: MODEL_X(:), MODEL_Y(:), MODEL_Z(:)
 
  ! Matlab / MEX input.
  ! READ_SYSTEM_AND_SURVEY inputs:
@@ -3361,7 +3361,9 @@ SUBROUTINE LEROI_TEM(MXTDFD, MXDO3D, MXISYS, MXPRFL, MXISTOP,                &
 !     END IF
  END IF
  !PRINT*, BFTL(1:NCHNL,1,3,1)
- FORWARD_MODEL = BFTL(1:NCHNL,1,3,1)
+ MODEL_X = BFTL(1:NCHNL,1,1,1)
+ MODEL_Y = BFTL(1:NCHNL,1,2,1)
+ MODEL_Z = BFTL(1:NCHNL,1,3,1)
 
  CALL CPU_TIME (CMP_END)
  ELAPSED = CMP_END - CMP_START
@@ -10179,6 +10181,30 @@ MODULE MEX_LEROI
     END IF
   END SUBROUTINE CHECK2DARRAY
 
+  !******************************************************************************************
+  ! Units checking:
+  SUBROUTINE CHECKUNITS(UNITS, NLINES)
+    ! No implicits:
+    IMPLICIT NONE
+    ! Inputs:
+    REAL(KIND = 8), INTENT(IN)                         :: NLINES
+    REAL(KIND = 8), DIMENSION(INT(NLINES)), INTENT(IN) :: UNITS
+    ! Loop variable:
+    INTEGER                                            :: I
+    ! Valid units values:
+    INTEGER, DIMENSION(17)                             :: VALIDUNITS
+    DATA VALIDUNITS /1, 2, 3, 4, 11, 12, 21, 22, 31, 32, 33, 34, 35, 41, 42, 43, 44/
+    ! If units value is not valid ... :
+    DO I = 1, INT(NLINES)
+      IF (.NOT. ANY(VALIDUNITS == UNITS(I))) THEN
+        CALL ERRORMESSAGE('typeargin',                                          &
+                          'Invalid value for UNITS. Valid values: '             &
+                          // '1, 2, 3, 4, 11, 12, 21, 22, 31, 32, 33, 34, 35, ' &
+                          // '41, 42, 43, 44')
+      END IF
+    END DO
+  END SUBROUTINE CHECKUNITS
+
 END MODULE MEX_LEROI
 
 !********************************************************************************************
@@ -10219,9 +10245,9 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   REAL(KIND = 8)                                :: NLINES, MRXL, NTX, SOURCE_TYPE, MXVRTX, A1
   ! * NVRTX TxZ
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: NVRTX, TXZ
-  ! * LINE, RX_TYPE, NRX, UNITS
+  ! * LINE, RX_TYPE, NRX
   ! * IDTX
-  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: LINE, RX_TYPE, NRX, UNITS
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: LINE, RX_TYPE, NRX
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:,:)   :: LNTR
   ! * CMP, KNORM, IPLT, IDH, RXMNT
   ! * SV_AZM
@@ -10255,22 +10281,24 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: LITHL
   ! * THK
   REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: THK
+  ! * UNITS 
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: UNITS
 
   ! Matlab output:
-  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: FORWARD_MODEL
-  MWSIZE                                        :: MSFORWARD_MODEL
-  MWPOINTER                                     :: MPFORWARD_MODEL
+  REAL(KIND = 8), ALLOCATABLE, DIMENSION(:)     :: MODEL_X, MODEL_Y, MODEL_Z
+  MWSIZE                                        :: MSMODEL_X, MSMODEL_Y, MSMODEL_Z
+  MWPOINTER                                     :: MPMODEL_X, MPMODEL_Y, MPMODEL_Z
 
   !******************************************************************************************
   ! Check number of input and output arguments.
   ! Seventeen input arguments required:
-  IF(NRHS .NE. 18) THEN
+  IF(NRHS .NE. 19) THEN
     CALL ERRORMESSAGE('nargin', &
-                      'Eighteen input arguments expected')
-  ! Only one output value will be provided:
-  ELSE IF(NLHS .GT. 1) THEN
+                      'Nineteen input arguments expected')
+  ! Three output values will be provided:
+  ELSE IF(NLHS .NE. 3) THEN
     CALL ERRORMESSAGE('nargout', &
-                      'One output argument expected')
+                      'Three output arguments expected')
   END IF
 
   !******************************************************************************************
@@ -10301,7 +10329,7 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   NVRTX = (/4/)
   ALLOCATE(TXZ(INT(NTX)))
   TXZ   = (/0/)
-  ! 1 1 1 1 4 ! LINE IDTX, RX_TYPE, NRX, UNITS
+  ! 1 1 1 1 ! LINE IDTX, RX_TYPE, NRX
   ALLOCATE(LINE(INT(NLINES)))
   LINE    = (/1/)
   ALLOCATE(LNTR(4, INT(NLINES)))
@@ -10310,8 +10338,6 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   RX_TYPE = (/1/)
   ALLOCATE(NRX(INT(NLINES)))
   NRX     = (/1/)
-  ALLOCATE(UNITS(INT(NLINES)))
-  UNITS   = (/4/)
   ! 3 0 0 1 0 1 ! CMP SV_AZM, KNORM, IPLT, IDH, RXMNT
   ALLOCATE(CMP(INT(NLINES)))
   CMP     = (/3/)
@@ -10442,13 +10468,32 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   CALL CHECK1DARRAY(PRHS(18), INT(NLYR - 1), 'typeargin',           &
                     'Argument 18 (THK) Should be a double vector.', &
                     THK)
+  ! Nineteenth argument is UNITS.
+  ! Check is array of correct size:
+  CALL CHECK1DARRAY(PRHS(19), INT(NLINES), 'typeargin',                    &
+                    'Argument 19 (UNITS) Should be a vector of integers.', &
+                    UNITS)
+  ! Check for integers:
+  DO I = 1, INT(NLINES)
+    IF (UNITS(I) .NE. FLOOR(UNITS(I))) THEN
+      ! Get number of expected values:
+      WRITE(NCHAR, '(I0)'), INT(NLINES)
+      CALL ERRORMESSAGE('typeargin',                                          &
+                        'Argument 19 (UNITS) Should be a vector of integers.' &
+                        // ' Expected size: 1x' // TRIM(NCHAR))
+    END IF
+  END DO
+  ! Check for valid units:
+  CALL CHECKUNITS(UNITS, NLINES)
 
-  ! Allocate FORWARD_MODEL output to required size:
-  ALLOCATE(FORWARD_MODEL(INT(NCHNL)))
+  ! Allocate output to required size:
+  ALLOCATE(MODEL_X(INT(NCHNL)))
+  ALLOCATE(MODEL_Y(INT(NCHNL)))
+  ALLOCATE(MODEL_Z(INT(NCHNL)))
 
   !******************************************************************************************
   ! Call LEROI_TEM with inputs from Matlab and static values.
-  ! Returns : FORWARD_MODEL
+  ! Returns : MODEL_X, MODEL_Y and MODEL_Z
   CALL LEROI_TEM(TDFD, DO3D, ISYS, PRFL, ISTOP,              &
                  STEP, NSX, NCHNL, KRXW, REFTYM, OFFTYM,     &
                  TXON, WAVEFORM,                             &
@@ -10464,16 +10509,24 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
                  LYTH,                                       &
                  LITHL,                                      &
                  THK,                                        &
-                 FORWARD_MODEL)
+                 MODEL_X, MODEL_Y, MODEL_Z)
 
-  ! Get output size:
-  MSFORWARD_MODEL = SIZE(FORWARD_MODEL)
-  ! Create Matlab matrix as first output:
-  PLHS(1) = MXCREATEDOUBLEMATRIX(MSFORWARD_MODEL, 1, 0)
-  ! Get pointer to first Matlab output:
-  MPFORWARD_MODEL = MXGETPR(PLHS(1))
+  ! Get output sizes:
+  MSMODEL_X = SIZE(MODEL_X)
+  MSMODEL_Y = SIZE(MODEL_Y)
+  MSMODEL_Z = SIZE(MODEL_Z)
+  ! Create Matlab matrixes for output:
+  PLHS(1) = MXCREATEDOUBLEMATRIX(MSMODEL_X, 1, 0)
+  PLHS(2) = MXCREATEDOUBLEMATRIX(MSMODEL_Y, 1, 0)
+  PLHS(3) = MXCREATEDOUBLEMATRIX(MSMODEL_Z, 1, 0)
+  ! Get pointers to Matlab output:
+  MPMODEL_X = MXGETPR(PLHS(1))
+  MPMODEL_Y = MXGETPR(PLHS(2))
+  MPMODEL_Z = MXGETPR(PLHS(3))
   ! Send the output back to Matlab:
-  CALL MXCOPYREAL8TOPTR(FORWARD_MODEL, MPFORWARD_MODEL, MSFORWARD_MODEL)
+  CALL MXCOPYREAL8TOPTR(MODEL_X, MPMODEL_X, MSMODEL_X)
+  CALL MXCOPYREAL8TOPTR(MODEL_Y, MPMODEL_Y, MSMODEL_Y)
+  CALL MXCOPYREAL8TOPTR(MODEL_Z, MPMODEL_Z, MSMODEL_Z)
   ! Return:
   RETURN
   !******************************************************************************************
