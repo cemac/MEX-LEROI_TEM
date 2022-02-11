@@ -29,13 +29,13 @@ Offset Loop with 1 receiver - Model: 2 layers over basement, 2 plates
 1                     ! SURVEY_TYPE
 1 1 1 1 4 1           ! NLINES, MRXL, NTX, SOURCE_TYPE, MVRTX, NTRN
 4 0                   ! NVRTX TxZ
-1 1 1 1 4             ! LINE IDTX, RX_TYPE, NRX, UNITS
+1 1 1 1               ! LINE IDTX, RX_TYPE, NRX
 3 0 0 1 0 1           ! CMP SV_AZM, KNORM, IPLT, IDH, RXMNT
 ```
 
 These values are used by the Leroi subroutine `READ_SYSTEM_AND_SURVEY_DATA`.
 
-Eighteen additional input values are required from Matlab for the variables `NCHNL`, `REFTYM`, `OFFTYM`, `TXON`, `TXAMP`, `TOPN`, `TCLS`, `SXE`, `SXN`, `RXE`, `RXN`, `RXZ`, `NLYR`, `NPLT`, `NLITH`, `LYTH`, `LITHL` and `THK`.
+Nineteen additional input values are required from Matlab for the variables `NCHNL`, `REFTYM`, `OFFTYM`, `TXON`, `TXAMP`, `TOPN`, `TCLS`, `SXE`, `SXN`, `RXE`, `RXN`, `RXZ`, `NLYR`, `NPLT`, `NLITH`, `LYTH`, `LITHL`, `THK` and `UNITS`.
 
 In the `Leroi.cfl` these would be specified as:
 
@@ -69,6 +69,7 @@ In the `Leroi.cfl` these would be specified as:
 -5 5
 -5 -5
 5 -5                  ! SXE, SXN(MVRTX)
+4                     ! UNITS
 15 0 0                ! RXE, RXN, RXZ    
 
 3 0 3                 !! NLYR, NPLT, NLITH
@@ -110,21 +111,17 @@ LYTH   = [9.9773, -1, 1, 1, 0, 0, 1; ...
           887.959, -1, 1, 1, 0, 0, 1];
 LITHL  = [1, 2, 3];
 THK    = [94.2462, 34.1019];
+UNITS  = [4];
 ```
 
 Then, to run the model in Matlab:
 
 ```
-LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
-          RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+[X, Y, Z] = LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+                      RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK, UNITS)
 ```
 
-This will return a single output double vector, e.g.:
-
-```
-OUT = LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
-                RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
-```
+This will return three output double vectors, `X`, `Y` and `Z`.
 
 The Fortran code will validate input values before running, e.g.:
 
@@ -142,6 +139,28 @@ The Fortran code will validate input values before running, e.g.:
 Error using LEROI_TEM
 Argument 13 (NLYR) should be an integer.
 ```
+
+### Units
+
+Valid values for the `UNITS` are:
+
+* `1`: volts (V)
+* `2`: millivolts (mV)
+* `3`: microvolts (mu-V)
+* `4`: nanovolts (nV)
+* `11`: nanoteslas / sec (nT/s)
+* `12`: picoteslas / sec (pT/s)
+* `21`: nanoteslas (nT)
+* `22`: picoteslas (pT)
+* `31`: ratio
+* `32`: percent
+* `33`: parts per thousand (PPT)
+* `34`: parts per million (PPM)
+* `35`: parts per billion (PPB)
+* `41`: volts per metre (V/m)
+* `42`: millivolts per metre (mV/m)
+* `43`: microvolts per metre (mV/m)
+* `44`: nanovolts per metre (nV/m)
 
 ### Limitations
 
