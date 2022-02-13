@@ -1,6 +1,6 @@
 # Windows compilation notes
 
-The MEX file included here was Compiled with Intel Fortran 2015 and Matlab 2016a.
+The MEX file included here was Compiled with Intel Fortran 2015 and Matlab 2016a on Windows 7.
 
 ## Requirements
 
@@ -13,12 +13,27 @@ Compilation requires the following components:
 
 # Compilation
 
-Using a Windows SDK commmand prompt:
+From a command prompt:
 
 ```
-set mldir=c:\Program Files\MATLAB\R2016a
-set include=%include%;%mldir%\extern\include
-set lib=%lib%;%mldir%\extern\lib\win64\microsoft
-"C:\Program Files (x86)\Intel\Composer XE\bin\intel64\ifort.exe" ifort /Qprec /fpp /LD /DMX_COMPAT_32 /DMATLAB_MEX_FILE LEROI_TEM.F90 libmx.lib libmex.lib /link /export:MEXFUNCTION /out:LEROI_TEM.mexw64
-```
+set PATH=
+set INCLUDE=
+set LIB=
 
+set VS_DIR=C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC
+set PATH=%VS_DIR%\bin\amd64;%PATH%
+set LIB=%VS_DIR%\lib\amd64;%LIB%
+
+set SDK_DIR=C:\Program Files\Microsoft SDKs\Windows\v7.1
+set LIB=%SDK_DIR%\Lib\x64;%LIB%
+
+set ML_DIR=C:\Program Files\MATLAB\R2016a
+set INCLUDE=%ML_DIR%\extern\include;%INCLUDE%
+set LIB=%ML_DIR%\extern\lib\win64\microsoft;%LIB%
+
+set INTEL_DIR=C:\Program Files (x86)\Intel\Composer XE
+set PATH=%INTEL_DIR%\bin\intel64;%PATH%
+set LIB=%INTEL_DIR%\compiler\lib\intel64;%LIB%
+
+ifort /Qprec /fpp /LD /DMX_COMPAT_32 /DMATLAB_MEX_FILE LEROI_TEM.F90 libmx.lib libmex.lib /link /export:MEXFUNCTION /out:LEROI_TEM.mexw64
+```
