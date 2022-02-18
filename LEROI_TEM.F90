@@ -10291,14 +10291,14 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
 
   !******************************************************************************************
   ! Check number of input and output arguments.
-  ! Seventeen input arguments required:
-  IF(NRHS .NE. 19) THEN
+  ! Eighteen or nineteen input arguments required:
+  IF(NRHS .NE. 18 .AND. NRHS .NE. 19) THEN
     CALL ERRORMESSAGE('nargin', &
-                      'Nineteen input arguments expected')
-  ! Three output values will be provided:
-  ELSE IF(NLHS .NE. 3) THEN
+                      'Eighteen or nineteen (if providing UNITS) input arguments expected')
+  ! One or three output values will be provided:
+  ELSE IF(NLHS .NE. 3 .AND. NLHS .GT. 1) THEN
     CALL ERRORMESSAGE('nargout', &
-                      'Three output arguments expected')
+                      'One (Z) or three ([X, Y, Z]) output arguments expected')
   END IF
 
   !******************************************************************************************
@@ -10468,23 +10468,30 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
   CALL CHECK1DARRAY(PRHS(18), INT(NLYR - 1), 'typeargin',           &
                     'Argument 18 (THK) Should be a double vector.', &
                     THK)
-  ! Nineteenth argument is UNITS.
-  ! Check is array of correct size:
-  CALL CHECK1DARRAY(PRHS(19), INT(NLINES), 'typeargin',                    &
-                    'Argument 19 (UNITS) Should be a vector of integers.', &
-                    UNITS)
-  ! Check for integers:
-  DO I = 1, INT(NLINES)
-    IF (UNITS(I) .NE. FLOOR(UNITS(I))) THEN
-      ! Get number of expected values:
-      WRITE(NCHAR, '(I0)'), INT(NLINES)
-      CALL ERRORMESSAGE('typeargin',                                          &
-                        'Argument 19 (UNITS) Should be a vector of integers.' &
-                        // ' Expected size: 1x' // TRIM(NCHAR))
-    END IF
-  END DO
-  ! Check for valid units:
-  CALL CHECKUNITS(UNITS, NLINES)
+  ! If nineteen input arguments, UNITS have been specified:
+  IF (NRHS .EQ. 19) THEN
+    ! Nineteenth argument is UNITS.
+    ! Check is array of correct size:
+    CALL CHECK1DARRAY(PRHS(19), INT(NLINES), 'typeargin',                    &
+                      'Argument 19 (UNITS) Should be a vector of integers.', &
+                      UNITS)
+    ! Check for integers:
+    DO I = 1, INT(NLINES)
+      IF (UNITS(I) .NE. FLOOR(UNITS(I))) THEN
+        ! Get number of expected values:
+        WRITE(NCHAR, '(I0)'), INT(NLINES)
+        CALL ERRORMESSAGE('typeargin',                                          &
+                          'Argument 19 (UNITS) Should be a vector of integers.' &
+                          // ' Expected size: 1x' // TRIM(NCHAR))
+      END IF
+    END DO
+    ! Check for valid units:
+    CALL CHECKUNITS(UNITS, NLINES)
+  ! Else UNITS not specified, use default:
+  ELSE
+    ALLOCATE(UNITS(INT(NLINES)))
+    UNITS   = (/4/)
+  END IF
 
   ! Allocate output to required size:
   ALLOCATE(MODEL_X(INT(NCHNL)))
@@ -10511,22 +10518,35 @@ SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
                  THK,                                        &
                  MODEL_X, MODEL_Y, MODEL_Z)
 
-  ! Get output sizes:
-  MSMODEL_X = SIZE(MODEL_X)
-  MSMODEL_Y = SIZE(MODEL_Y)
-  MSMODEL_Z = SIZE(MODEL_Z)
-  ! Create Matlab matrixes for output:
-  PLHS(1) = MXCREATEDOUBLEMATRIX(MSMODEL_X, 1, 0)
-  PLHS(2) = MXCREATEDOUBLEMATRIX(MSMODEL_Y, 1, 0)
-  PLHS(3) = MXCREATEDOUBLEMATRIX(MSMODEL_Z, 1, 0)
-  ! Get pointers to Matlab output:
-  MPMODEL_X = MXGETPR(PLHS(1))
-  MPMODEL_Y = MXGETPR(PLHS(2))
-  MPMODEL_Z = MXGETPR(PLHS(3))
-  ! Send the output back to Matlab:
-  CALL MXCOPYREAL8TOPTR(MODEL_X, MPMODEL_X, MSMODEL_X)
-  CALL MXCOPYREAL8TOPTR(MODEL_Y, MPMODEL_Y, MSMODEL_Y)
-  CALL MXCOPYREAL8TOPTR(MODEL_Z, MPMODEL_Z, MSMODEL_Z)
+  ! If three output arguments, return x, y, and z:
+  IF(NLHS .EQ. 3) THEN
+    ! Get output sizes:
+    MSMODEL_X = SIZE(MODEL_X)
+    MSMODEL_Y = SIZE(MODEL_Y)
+    MSMODEL_Z = SIZE(MODEL_Z)
+    ! Create Matlab matrixes for output:
+    PLHS(1) = MXCREATEDOUBLEMATRIX(MSMODEL_X, 1, 0)
+    PLHS(2) = MXCREATEDOUBLEMATRIX(MSMODEL_Y, 1, 0)
+    PLHS(3) = MXCREATEDOUBLEMATRIX(MSMODEL_Z, 1, 0)
+    ! Get pointers to Matlab output:
+    MPMODEL_X = MXGETPR(PLHS(1))
+    MPMODEL_Y = MXGETPR(PLHS(2))
+    MPMODEL_Z = MXGETPR(PLHS(3))
+    ! Send the output back to Matlab:
+    CALL MXCOPYREAL8TOPTR(MODEL_X, MPMODEL_X, MSMODEL_X)
+    CALL MXCOPYREAL8TOPTR(MODEL_Y, MPMODEL_Y, MSMODEL_Y)
+    CALL MXCOPYREAL8TOPTR(MODEL_Z, MPMODEL_Z, MSMODEL_Z)
+  ! Else, one output argument, return Z:
+  ELSE
+    ! Get output sizes:
+    MSMODEL_Z = SIZE(MODEL_Z)
+    ! Create Matlab matrixes for output:
+    PLHS(1) = MXCREATEDOUBLEMATRIX(MSMODEL_Z, 1, 0)
+    ! Get pointers to Matlab output:
+    MPMODEL_Z = MXGETPR(PLHS(1))
+    ! Send the output back to Matlab:
+    CALL MXCOPYREAL8TOPTR(MODEL_Z, MPMODEL_Z, MSMODEL_Z)
+  END IF
   ! Return:
   RETURN
   !******************************************************************************************
