@@ -123,6 +123,20 @@ Then, to run the model in Matlab:
 
 This will return three output double vectors, `X`, `Y` and `Z`.
 
+If the UNITS value is omitted, a default value of 4 will be used:
+
+```
+[X, Y, Z] = LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+                      RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK)
+```
+
+If a single output argument is provided, only the Z values will be returned:
+
+```
+Z = LEROI_TEM(NCHNL, REFTYM, OFFTYM, TXON, TXAMP, TOPN, TCLS, SXE, SXN, ...
+              RXE, RXN, RXZ, NLYR, NPLT, NLITH, LYTH, LITHL, THK, UNITS)
+```
+
 The Fortran code will validate input values before running, e.g.:
 
 ```
